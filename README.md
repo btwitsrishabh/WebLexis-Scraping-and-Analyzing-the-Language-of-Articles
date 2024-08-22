@@ -45,7 +45,7 @@ The script uses various libraries such as `Selenium`, `NLTK`, and `Pandas` for w
 ### Installation
 1. Install the required libraries using the following command:
 ```bash
-pip install pandas selenium nltk openpyxl
+pip install -r requirements.txt
 ```
 2. Put the file path of the `Input.xlsx` file
 3. Open the terminal or cmd and navigate to the directory of the `main.py` file.
