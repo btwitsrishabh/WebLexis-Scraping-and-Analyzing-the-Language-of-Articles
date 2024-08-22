@@ -35,7 +35,7 @@ Finally, the script stores the results in an `output.xlsx` file. Where it used `
 
 ### Output
 Output is retrieved in this format:
- ![image](image.png)
+ ![image](Image.png)
 
 ### Conclusion
 The script uses various libraries such as `Selenium`, `NLTK`, and `Pandas` for web scraping, text processing, and data manipulation respectively. It provides a comprehensive analysis of the extracted text in terms of sentiment, readability, and complexity. The results are stored in an output file for further analysis and reporting.
