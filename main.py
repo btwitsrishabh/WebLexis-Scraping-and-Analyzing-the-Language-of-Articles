@@ -5,7 +5,6 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from nltk.tokenize import sent_tokenize, word_tokenize
 
-# Function to initialize stop words from given files
 def initialize_stop_words(stop_words_files):
     stop_words = set()
     for stop_file in stop_words_files:
@@ -14,20 +13,17 @@ def initialize_stop_words(stop_words_files):
                 stop_words.add(line.strip())
     return stop_words
 
-# Function to read content from a URL
 def read_content_from_url(driver, url):
     driver.get(url)
     article_title = driver.find_element(By.XPATH, '//h1[@class="entry-title"]').text
     article_texts = driver.find_element(By.XPATH, '//div[@class="td-post-content tagdiv-type"]').text
     return article_title, article_texts
 
-# Function to clean the text
 def clean_text(text, stop_words):
     words_in_text = text.split()
     remaining_words = [word for word in words_in_text if word.lower() not in stop_words]
     return " ".join(remaining_words)
 
-# Function to count syllables in a word
 def syllable_count(word):
     count = 0
     vowels = "aeiouy"
@@ -42,42 +38,34 @@ def syllable_count(word):
         count += 1
     return count
 
-# Function to identify complex words
 def is_complex(word):
     return syllable_count(word) >= 3
 
 def count_syllables(word):
     
-    # Handle acronyms like 'AI' or 'ML'
     if len(word) == 2 and word.isupper():
         return 2
 
     word = word.lower()   
-    # Handle words with hyphens or other non-alphabetic characters
     word = re.sub(r'[^a-z]', '', word)
     
     vowels = "aeiouy"
     syllables = 0
 
-    # Vowel groups generally count as a single syllable
     vowel_groups = re.findall(r'[aeiouy]+', word)
     syllables += len(vowel_groups)
     
-    # Handle silent 'e' at the end
     if word.endswith("e") and len(word) > 1 and word[-2] not in vowels and not word.endswith("le"):
         syllables -= 1
 
-    # Handle words ending in 'le' after a consonant
     if word.endswith("le") and len(word) > 2 and word[-3] not in vowels:
         syllables += 1
 
-    # Handle words ending in 'es' and 'ed'
     if word.endswith("es") and len(word) > 2 and word[-3] not in vowels:
         syllables -= 1
     elif word.endswith("ed") and len(word) > 2 and word[-3] not in vowels:
         syllables -= 1
 
-    # Ensure at least one syllable is counted
     if syllables == 0:
         syllables = 1
 
@@ -95,51 +83,38 @@ def syl_count(file_path):
     syllable_counts = process_text_file(file_path)
     return syllable_counts
 
-# Function to analyze the text
 def analyze_text(file_content, positive_words, negative_words, stop_words):
-    # Clean text
     remaining_words = clean_text(file_content, stop_words)
     tokens = word_tokenize(remaining_words)
     
-    # Calculate positive and negative scores
     positive_score = sum(1 for word in tokens if word in positive_words)
     negative_score = sum(1 for word in tokens if word in negative_words)
     
-    # Calculate polarity and subjectivity scores
     polarity_score = (positive_score - negative_score) / ((positive_score + negative_score) + 0.000001)
     subjectivity_score = (positive_score + negative_score) / (len(tokens) + 0.000001)
     
-    # Tokenize text into sentences
     sentences = sent_tokenize(file_content)
     words = word_tokenize(file_content)
     
-    # Calculate average sentence length
     average_sentence_length = len(words) / len(sentences)
     
-    # Calculate percentage of complex words
     complex_words = [word for word in words if is_complex(word)]
     percentage_complex_words = len(complex_words) / len(words)
     
-    # Calculate Fog Index
     fog_index = 0.4 * (average_sentence_length + (percentage_complex_words * 100))
     
-    # Calculate average number of words per sentence
     average_number_of_words_per_sentence = len(words) / len(sentences)
     
-    # Count the number of complex words
     complex_word_count = len(complex_words)
     
-    # Count the total number of cleaned words
     word_count = len(remaining_words.split())
     
-    # Count personal pronouns
     pronoun_pattern = re.compile(r'\b(I|we|my|ours|us)\b', re.IGNORECASE)
     pronouns_found = pronoun_pattern.findall(file_content)
     personal_pronoun_count = sum(1 for pronoun in pronouns_found if pronoun.lower() != "us")
 
     syllables_per_word = syl_count(file_content)
     
-    # Calculate average word length
     cleaned_words = [word for word in words if word not in string.punctuation]
     total_characters = sum(len(word) for word in cleaned_words)
     total_words = len(cleaned_words)
@@ -161,7 +136,6 @@ def analyze_text(file_content, positive_words, negative_words, stop_words):
         'Avg Word Length': average_word_length
     }
 
-# Initialize stop words
 stop_words_files = [
     "StopWords/StopWords_Auditor.txt",
     "StopWords/StopWords_Currencies.txt",
@@ -173,26 +147,21 @@ stop_words_files = [
 ]
 stop_words = initialize_stop_words(stop_words_files)
 
-# Load positive and negative words
 with open("D:/Web Scrapping/MasterDictionary/negative-words.txt", "r") as file:
     negative_words = file.read().split()
 with open("D:/Web Scrapping/MasterDictionary/positive-words.txt", "r") as file:
     positive_words = file.read().split()
 
-# Filter out stop words from positive and negative word lists
 filtered_positive_words = [word for word in positive_words if word not in stop_words]
 filtered_negative_words = [word for word in negative_words if word not in stop_words]
 
-# Read input data
 input_data = pd.read_excel('D:\Web Scrapping\Input.xlsx')
 url_ids = input_data['URL_ID']
 urls = input_data['URL']
 
-# Initialize web driver
 driver = webdriver.Chrome()
 driver.maximize_window()
 
-# Initialize results list
 results = []
 
 for url_id, url in zip(url_ids, urls):
@@ -201,7 +170,6 @@ for url_id, url in zip(url_ids, urls):
         file_content = article_title + "\n\n\n\n\n\n" + article_texts
         analysis_result = analyze_text(file_content, filtered_positive_words, filtered_negative_words, stop_words)
         
-        # Append results
         result = {
             'URL_ID': url_id,
             'URL': url,
@@ -211,10 +179,8 @@ for url_id, url in zip(url_ids, urls):
     except Exception as e:
         print(f"Error processing URL {url}: {e}")
 
-# Close the driver
 driver.quit()
 
-# Save results to DataFrame and then to Excel
 results_df = pd.DataFrame(results)
 results_df.to_excel('output.xlsx', index=False)
 
